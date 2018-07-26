@@ -4,7 +4,7 @@ A collection of small tweaks for the PS Vita
 
 ## 1. NoLockScreen
 
-Enable it in `*main`
+Download [nolockscreen.suprx](https://github.com/TheOfficialFloW/VitaTweaks/releases/tag/NoLockScreen) and enable it in `*main` as follows:
 
 ```
 *main
