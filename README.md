@@ -20,3 +20,6 @@ Download [download_enabler.suprx](https://github.com/TheOfficialFloW/VitaTweaks/
 ux0:tai/download_enabler.suprx
 ```
 
+## Support
+
+Support me on [patreon](https://www.patreon.com/TheOfficialFloW) for more content
