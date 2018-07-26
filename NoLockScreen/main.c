@@ -19,7 +19,7 @@
 #include <psp2/kernel/modulemgr.h>
 #include <taihen.h>
 
-static SceUID hookid = -1;
+static SceUID hooks[2];
 
 void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
@@ -30,13 +30,15 @@ int module_start(SceSize args, void *argp) {
 
     switch (info.module_nid) {
       case 0x0552F692: // 3.60 retail
-        hookid = taiInjectData(info.modid, 0, 0x2361D2, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        hooks[0] = taiInjectData(info.modid, 0, 0x2354D2, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        hooks[1] = taiInjectData(info.modid, 0, 0x2361D2, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
         break;
 
       case 0x5549BF1F: // 3.65 retail
       case 0x34B4D82E: // 3.67 retail
       case 0x12DAC0F3: // 3.68 retail
-        hookid = taiInjectData(info.modid, 0, 0x23626E, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        hooks[0] = taiInjectData(info.modid, 0, 0x23556E, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        hooks[1] = taiInjectData(info.modid, 0, 0x23626E, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
         break;
     }
   }
@@ -45,8 +47,10 @@ int module_start(SceSize args, void *argp) {
 }
 
 int module_stop(SceSize args, void *argp) {
-  if (hookid >= 0)
-    taiInjectRelease(hookid);
+  if (hooks[1] >= 0)
+    taiInjectRelease(hooks[1]);
+  if (hooks[0] >= 0)
+    taiInjectRelease(hooks[0]);
 
   return SCE_KERNEL_STOP_SUCCESS;
 }
