@@ -49,7 +49,7 @@ Download [custom_warning.suprx](https://github.com/TheOfficialFloW/VitaTweaks/re
 ux0:tai/custom_warning.suprx
 ```
 
-Then write your custom text to `ux0:tai/custom_warning.txt` using `UCS-2 LE-BOM` format.
+Then write your custom text to `ux0:tai/custom_warning.txt` using `UCS-2 LE-BOM` format. You can also have no text by creating the file with the BOM only.
 
 ## Support
 
