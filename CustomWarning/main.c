@@ -37,10 +37,11 @@ static wchar_t custom_warning_buf[MAX_CUSTOM_WARNING_LENGTH];
 static wchar_t *custom_warning = custom_warning_buf;
 
 static wchar_t *scePafToplevelGetTextPatched(void *a0, void *a1) {
-  uint32_t id = *(uint32_t *)(a1 + 0xC);
-
-  if (id == 0x76A1B071 || id == 0x72411882)
-    return custom_warning;
+  if (a1) {
+    uint32_t id = *(uint32_t *)(a1 + 0xC);
+    if (id == 0x76A1B071 || id == 0x72411882)
+      return custom_warning;
+  }
 
   return TAI_CONTINUE(wchar_t *, scePafToplevelGetTextRef, a0, a1);
 }
@@ -49,7 +50,7 @@ static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize ar
   int res = TAI_CONTINUE(int, sceSysmoduleLoadModuleInternalWithArgRef, id, args, argp, unk);
 
   if (res >= 0 && id == SCE_SYSMODULE_INTERNAL_PAF) {
-    hooks[1] = taiHookFunctionExport(&scePafToplevelGetTextRef, "ScePaf", 0x4D9A9DD0, 0x19CEFDA7,
+    hooks[1] = taiHookFunctionImport(&scePafToplevelGetTextRef, "SceShell", 0x4D9A9DD0, 0x19CEFDA7,
                                      scePafToplevelGetTextPatched);
   }
 
