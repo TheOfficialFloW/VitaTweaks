@@ -38,6 +38,19 @@ Download [notrophymsg.suprx](https://github.com/TheOfficialFloW/VitaTweaks/relea
 ux0:tai/notrophymsg.suprx
 ```
 
+## 4. Custom Warning
+
+This tweak allows you to set a custom warning message when bootup with enso instead of the epilepsy warning.
+
+Download [custom_warning.suprx](https://github.com/TheOfficialFloW/VitaTweaks/releases/tag/CustomWarning), edit `ux0:tai/config.txt` and enable it in `*main` as follows:
+
+```
+*main
+ux0:tai/custom_warning.suprx
+```
+
+Then write your custom text to `ux0:tai/custom_warning.txt` using `UCS-2 LE-BOM` format.
+
 ## Support
 
 Support me on [patreon](https://www.patreon.com/TheOfficialFloW) for more content
