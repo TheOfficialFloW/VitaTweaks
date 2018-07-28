@@ -20,21 +20,19 @@
 #include <psp2/kernel/clib.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/sysmodule.h>
+#include <psp2/paf.h>
 
 #include <stdio.h>
 #include <string.h>
 
 #include <taihen.h>
 
-#define MAX_CUSTOM_WARNING_LENGTH 512
-
 static tai_hook_ref_t sceSysmoduleLoadModuleInternalWithArgRef;
 static tai_hook_ref_t scePafToplevelGetTextRef;
 
 static SceUID hooks[2];
 
-static wchar_t custom_warning_buf[MAX_CUSTOM_WARNING_LENGTH];
-static wchar_t *custom_warning = custom_warning_buf;
+static wchar_t *custom_warning = NULL;
 
 static wchar_t *scePafToplevelGetTextPatched(void *a0, void *a1) {
   if (a1) {
@@ -50,8 +48,29 @@ static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize ar
   int res = TAI_CONTINUE(int, sceSysmoduleLoadModuleInternalWithArgRef, id, args, argp, unk);
 
   if (res >= 0 && id == SCE_SYSMODULE_INTERNAL_PAF) {
-    hooks[1] = taiHookFunctionImport(&scePafToplevelGetTextRef, "SceShell", 0x4D9A9DD0, 0x19CEFDA7,
-                                     scePafToplevelGetTextPatched);
+    SceUID fd = sceIoOpen("ux0:tai/custom_warning.txt", SCE_O_RDONLY, 0);
+    if (fd < 0)
+      fd = sceIoOpen("ur0:tai/custom_warning.txt", SCE_O_RDONLY, 0);
+
+    if (fd >= 0) {
+      int size = sceIoLseek32(fd, 0, SCE_SEEK_END);
+      sceIoLseek32(fd, 0, SCE_SEEK_SET);
+
+      custom_warning = (wchar_t *)sce_paf_private_malloc(size + 2);
+      if (custom_warning) {
+        sceIoRead(fd, custom_warning, size);
+        sceIoClose(fd);
+
+        custom_warning[size] = 0;
+
+        if (custom_warning[0] == 0xFEFF) {
+          custom_warning++;
+
+          hooks[1] = taiHookFunctionImport(&scePafToplevelGetTextRef, "SceShell", 0x4D9A9DD0, 0x19CEFDA7,
+                                           scePafToplevelGetTextPatched);
+        }
+      }
+    }
   }
 
   return res;
@@ -59,22 +78,8 @@ static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize ar
 
 void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
-  SceUID fd = sceIoOpen("ux0:tai/custom_warning.txt", SCE_O_RDONLY, 0);
-  if (fd < 0)
-    fd = sceIoOpen("ur0:tai/custom_warning.txt", SCE_O_RDONLY, 0);
-
-  if (fd >= 0) {
-    sceClibMemset(custom_warning, 0, 2 * MAX_CUSTOM_WARNING_LENGTH);
-    sceIoRead(fd, custom_warning, 2 * MAX_CUSTOM_WARNING_LENGTH);
-    sceIoClose(fd);
-
-    if (custom_warning[0] == 0xFEFF) {
-      custom_warning++;
-
-      hooks[0] = taiHookFunctionImport(&sceSysmoduleLoadModuleInternalWithArgRef, "SceShell", 0x03FCF19D, 0xC3C26339,
-                                        sceSysmoduleLoadModuleInternalWithArgPatched);
-    }
-  }
+  hooks[0] = taiHookFunctionImport(&sceSysmoduleLoadModuleInternalWithArgRef, "SceShell", 0x03FCF19D, 0xC3C26339,
+                                    sceSysmoduleLoadModuleInternalWithArgPatched);
 
   return SCE_KERNEL_START_SUCCESS;
 }

@@ -21,6 +21,7 @@ add_executable(custom_warning
 target_link_libraries(custom_warning
   SceIofilemgr_stub
   SceLibKernel_stub
+  ScePaf_stub_weak
   taiHEN_stub
 )
 
