@@ -70,7 +70,6 @@ static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize ar
 
     if (custom_warning[0] != 0xFEFF) {
       sce_paf_private_free(custom_warning);
-      sceIoClose(fd);
       return res;
     }
 
