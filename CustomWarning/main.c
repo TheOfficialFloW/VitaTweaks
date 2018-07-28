@@ -51,26 +51,33 @@ static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize ar
     SceUID fd = sceIoOpen("ux0:tai/custom_warning.txt", SCE_O_RDONLY, 0);
     if (fd < 0)
       fd = sceIoOpen("ur0:tai/custom_warning.txt", SCE_O_RDONLY, 0);
+    if (fd < 0)
+      return res;
 
-    if (fd >= 0) {
-      int size = sceIoLseek32(fd, 0, SCE_SEEK_END);
-      sceIoLseek32(fd, 0, SCE_SEEK_SET);
+    int size = sceIoLseek32(fd, 0, SCE_SEEK_END);
+    sceIoLseek32(fd, 0, SCE_SEEK_SET);
 
-      custom_warning = (wchar_t *)sce_paf_private_malloc(size + 2);
-      if (custom_warning) {
-        sceIoRead(fd, custom_warning, size);
-        sceIoClose(fd);
-
-        custom_warning[size] = 0;
-
-        if (custom_warning[0] == 0xFEFF) {
-          custom_warning++;
-
-          hooks[1] = taiHookFunctionImport(&scePafToplevelGetTextRef, "SceShell", 0x4D9A9DD0, 0x19CEFDA7,
-                                           scePafToplevelGetTextPatched);
-        }
-      }
+    custom_warning = (wchar_t *)sce_paf_private_malloc(size + 2);
+    if (!custom_warning) {
+      sceIoClose(fd);
+      return res;
     }
+
+    sceIoRead(fd, custom_warning, size);
+    sceIoClose(fd);
+
+    custom_warning[size] = 0;
+
+    if (custom_warning[0] != 0xFEFF) {
+      sce_paf_private_free(custom_warning);
+      sceIoClose(fd);
+      return res;
+    }
+
+    custom_warning++;
+
+    hooks[1] = taiHookFunctionImport(&scePafToplevelGetTextRef, "SceShell", 0x4D9A9DD0, 0x19CEFDA7,
+                                     scePafToplevelGetTextPatched);
   }
 
   return res;
