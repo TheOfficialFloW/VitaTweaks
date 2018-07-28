@@ -42,10 +42,6 @@ ux0:tai/notrophymsg.suprx
 
 This tweak allows you to set a custom warning message instead of the epilepsy warning when you bootup with enso.
 
-### Changelog v3
-
-- Removed character length limit
-
 ### Changelog v2
 
 - Fixed crash in system applications
