@@ -34,11 +34,31 @@ int module_start(SceSize args, void *argp) {
         hooks[1] = taiInjectData(info.modid, 0, 0x2361D2, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
         break;
 
+      case 0x6CB01295: // 3.60 PDEL
+        hooks[0] = taiInjectData(info.modid, 0, 0x228EF6, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        hooks[1] = taiInjectData(info.modid, 0, 0x229BF0, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        break;
+      
+      case 0xEAB89D5C: // 3.60 PTEL
+        hooks[0] = taiInjectData(info.modid, 0, 0x22D906, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        hooks[1] = taiInjectData(info.modid, 0, 0x22E606, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        break;
+
       case 0x5549BF1F: // 3.65 retail
       case 0x34B4D82E: // 3.67 retail
       case 0x12DAC0F3: // 3.68 retail
         hooks[0] = taiInjectData(info.modid, 0, 0x23556E, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
         hooks[1] = taiInjectData(info.modid, 0, 0x23626E, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        break;
+
+      case 0xE6A02F2B: // 3.65 PDEL
+        hooks[0] = taiInjectData(info.modid, 0, 0x228F92, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        hooks[1] = taiInjectData(info.modid, 0, 0x229C8C, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        break;
+
+      case 0x587F9CED: // 3.65 PTEL
+        hooks[0] = taiInjectData(info.modid, 0, 0x22D9A2, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+        hooks[1] = taiInjectData(info.modid, 0, 0x22E6A2, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
         break;
     }
   }
