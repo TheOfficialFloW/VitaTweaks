@@ -40,11 +40,27 @@ int module_start(SceSize args, void *argp) {
         hookid = taiHookFunctionOffset(&savedata_aid_check_ref, info.modid, 0, 0x28B854, 1, savedata_aid_check_patched);
         break;
 
+      case 0x6CB01295: // 3.60 PDEL
+        hookid = taiHookFunctionOffset(&savedata_aid_check_ref, info.modid, 0, 0x27F1F8, 1, savedata_aid_check_patched);
+        break;
+
+      case 0xEAB89D5C: // 3.60 PTEL
+        hookid = taiHookFunctionOffset(&savedata_aid_check_ref, info.modid, 0, 0x283C00, 1, savedata_aid_check_patched);
+        break;
+
       case 0x5549BF1F: // 3.65 retail
       case 0x34B4D82E: // 3.67 retail
       case 0x12DAC0F3: // 3.68 retail
       case 0x0703C828: // 3.69 retail
         hookid = taiHookFunctionOffset(&savedata_aid_check_ref, info.modid, 0, 0x28BC80, 1, savedata_aid_check_patched);
+        break;
+
+      case 0xE6A02F2B: // 3.65 PDEL
+        hookid = taiHookFunctionOffset(&savedata_aid_check_ref, info.modid, 0, 0x27F6C4, 1, savedata_aid_check_patched);
+        break;
+
+      case 0x587F9CED: // 3.65 PTEL
+        hookid = taiHookFunctionOffset(&savedata_aid_check_ref, info.modid, 0, 0x28402C, 1, savedata_aid_check_patched);
         break;
     }
   }
