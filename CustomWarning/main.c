@@ -48,46 +48,51 @@ static wchar_t *scePafToplevelGetTextPatched(void *a0, void *a1) {
 
 static SceUID get_warn_file(const char * mount) {
   // search mount m for dir of files, then fallback to just file
-  SceSize len = sceClibStrnlen(mount, 10);
+  SceSize mount_len = sceClibStrnlen(mount, 10);
   char buf [300];
   const char* loc = buf;
-  SceUID dfd, fd;
+  SceUID dfd;
+  SceIoDirent entry;
 
-  sceClibSnprintf(buf, len + 20, "%s:tai/custom_warning", mount);
+  sceClibSnprintf(buf, mount_len + 20, "%s:tai/custom_warning", mount);
   dfd = sceIoDopen(loc);
-  if (dfd >= 0) {
-    // look for files in folder
-    SceIoDirent entry;
-    uint max = 0;
-    while (sceIoDread(dfd, &entry) > 0) {
-      max++;
-    }
-    uint rando;
-    if (sceKernelGetRandomNumber(&rando, sizeof(rando)) == 0) {
-      uint choice = rando % max;
+  if (dfd < 0)
+    goto fallback;
 
-      // reopen to reset cursor
-      sceIoDclose(dfd);
-      dfd = sceIoDopen(loc);
-      uint i = 0;
-      while (i <= choice && sceIoDread(dfd, &entry) > 0) {
-        i++;
-      }
-      if (i == choice) {
-        SceSize str_len = sceClibStrnlen(entry.d_name, 255);
-        sceClibSnprintf(buf, len + 21 + str_len, "%s:tai/custom_warning/%s", mount, entry.d_name);
-        fd = sceIoOpen(loc, SCE_O_RDONLY, 0);
+  // look for files in folder
+  uint num_files = 0;
+  while (sceIoDread(dfd, &entry) >= 0)
+    num_files++;
 
-        sceIoDclose(dfd);
-        return fd;
-      }
-    }
-    sceIoDclose(dfd);
-  }
+  sceIoDclose(dfd);
+  if (num_files == 0)
+    goto fallback;
 
-  sceClibSnprintf(buf, len + 24, "%s:tai/custom_warning.txt", mount);
-  fd = sceIoOpen(loc, SCE_O_RDONLY, 0);
-  return fd;
+  uint rando;
+  if (sceKernelGetRandomNumber(&rando, sizeof(rando)) < 0)
+    goto fallback;
+  uint choice = rando % num_files;
+
+  // reopen to reset cursor
+  dfd = sceIoDopen(loc);
+  if (dfd < 0)
+    goto fallback;
+
+  uint i = 0;
+  while (i < choice && sceIoDread(dfd, &entry) > 0)
+    i++;
+
+  sceIoDclose(dfd);
+  if (i != choice)
+    goto fallback;
+
+  SceSize name_len = sceClibStrnlen(entry.d_name, 255);
+  sceClibSnprintf(buf, mount_len + 21 + name_len, "%s:tai/custom_warning/%s", mount, entry.d_name);
+  return sceIoOpen(loc, SCE_O_RDONLY, 0);
+
+fallback:
+  sceClibSnprintf(buf, mount_len + 24, "%s:tai/custom_warning.txt", mount);
+  return sceIoOpen(loc, SCE_O_RDONLY, 0);
 }
 
 static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize args, void *argp, void *unk) {
