@@ -46,53 +46,63 @@ static wchar_t *scePafToplevelGetTextPatched(void *a0, void *a1) {
   return TAI_CONTINUE(wchar_t *, scePafToplevelGetTextRef, a0, a1);
 }
 
+#define CHECK(ret) \
+  if (!(ret)) \
+    goto fallback;
+
 static SceUID get_warn_file(const char * mount) {
   // search mount m for dir of files, then fallback to just file
   SceSize mount_len = sceClibStrnlen(mount, 10);
   char buf [300];
-  const char* loc = buf;
   SceUID dfd;
   SceIoDirent entry;
 
   sceClibSnprintf(buf, mount_len + 20, "%s:tai/custom_warning", mount);
-  dfd = sceIoDopen(loc);
-  if (dfd < 0)
-    goto fallback;
+  dfd = sceIoDopen(buf);
+  CHECK(dfd > 0);
 
   // look for files in folder
   uint num_files = 0;
-  while (sceIoDread(dfd, &entry) >= 0)
+  int ret = 0;
+  do {
+    ret = sceIoDread(dfd, &entry);
+    CHECK(ret >= 0);
     num_files++;
+  } while (ret > 0);
 
-  sceIoDclose(dfd);
+  CHECK(sceIoDclose(dfd) >= 0);
   if (num_files == 0)
     goto fallback;
 
-  uint rando;
+  uint rando, choice;
   if (sceKernelGetRandomNumber(&rando, sizeof(rando)) < 0)
     goto fallback;
-  uint choice = rando % num_files;
+  choice = rando % num_files;
 
   // reopen to reset cursor
-  dfd = sceIoDopen(loc);
-  if (dfd < 0)
-    goto fallback;
+  dfd = sceIoDopen(buf);
+  CHECK(dfd > 0);
 
   uint i = 0;
-  while (i < choice && sceIoDread(dfd, &entry) > 0)
+  do {
+    if (i >= choice)
+      break;
+    ret = sceIoDread(dfd, &entry);
+    CHECK(ret >= 0);
     i++;
+  } while (ret > 0);
 
-  sceIoDclose(dfd);
+  CHECK(sceIoDclose(dfd) >= 0);
   if (i != choice)
     goto fallback;
 
   SceSize name_len = sceClibStrnlen(entry.d_name, 255);
   sceClibSnprintf(buf, mount_len + 21 + name_len, "%s:tai/custom_warning/%s", mount, entry.d_name);
-  return sceIoOpen(loc, SCE_O_RDONLY, 0);
+  return sceIoOpen(buf, SCE_O_RDONLY, 0);
 
 fallback:
   sceClibSnprintf(buf, mount_len + 24, "%s:tai/custom_warning.txt", mount);
-  return sceIoOpen(loc, SCE_O_RDONLY, 0);
+  return sceIoOpen(buf, SCE_O_RDONLY, 0);
 }
 
 static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize args, void *argp, void *unk) {
