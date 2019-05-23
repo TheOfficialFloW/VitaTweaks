@@ -18,6 +18,8 @@
 
 #include <psp2/kernel/modulemgr.h>
 #include <psp2/kernel/clib.h>
+#include <psp2/kernel/rng.h>
+#include <psp2/io/dirent.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/sysmodule.h>
 #include <psp2/paf.h>
@@ -44,13 +46,74 @@ static wchar_t *scePafToplevelGetTextPatched(void *a0, void *a1) {
   return TAI_CONTINUE(wchar_t *, scePafToplevelGetTextRef, a0, a1);
 }
 
+#define CHECK(ret) \
+  if (!(ret)) \
+    goto fallback;
+
+static SceUID get_warn_file(const char * mount) {
+  // search mount m for dir of files, then fallback to just file
+  SceSize mount_len = sceClibStrnlen(mount, 10);
+  char buf [300];
+  SceUID dfd;
+  SceIoDirent entry;
+
+  sceClibSnprintf(buf, mount_len + 20, "%s:tai/custom_warning", mount);
+  dfd = sceIoDopen(buf);
+  CHECK(dfd > 0);
+
+  // look for files in folder
+  uint num_files = 0;
+  int ret = 0;
+  do {
+    ret = sceIoDread(dfd, &entry);
+    CHECK(ret >= 0);
+    num_files++;
+  } while (ret > 0);
+
+  CHECK(sceIoDclose(dfd) >= 0);
+  if (num_files == 0)
+    goto fallback;
+
+  uint rando, choice;
+  if (sceKernelGetRandomNumber(&rando, sizeof(rando)) < 0)
+    goto fallback;
+  choice = rando % num_files;
+
+  // reopen to reset cursor
+  dfd = sceIoDopen(buf);
+  CHECK(dfd > 0);
+
+  uint i = 0;
+  do {
+    if (i >= choice)
+      break;
+    ret = sceIoDread(dfd, &entry);
+    CHECK(ret >= 0);
+    i++;
+  } while (ret > 0);
+
+  CHECK(sceIoDclose(dfd) >= 0);
+  if (i != choice)
+    goto fallback;
+
+  SceSize name_len = sceClibStrnlen(entry.d_name, 255);
+  sceClibSnprintf(buf, mount_len + 21 + name_len, "%s:tai/custom_warning/%s", mount, entry.d_name);
+  return sceIoOpen(buf, SCE_O_RDONLY, 0);
+
+fallback:
+  sceClibSnprintf(buf, mount_len + 24, "%s:tai/custom_warning.txt", mount);
+  return sceIoOpen(buf, SCE_O_RDONLY, 0);
+}
+
 static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize args, void *argp, void *unk) {
   int res = TAI_CONTINUE(int, sceSysmoduleLoadModuleInternalWithArgRef, id, args, argp, unk);
 
   if (res >= 0 && id == SCE_SYSMODULE_INTERNAL_PAF) {
-    SceUID fd = sceIoOpen("ux0:tai/custom_warning.txt", SCE_O_RDONLY, 0);
+
+    // search for right file
+    SceUID fd = get_warn_file("ux0");
     if (fd < 0)
-      fd = sceIoOpen("ur0:tai/custom_warning.txt", SCE_O_RDONLY, 0);
+      fd = get_warn_file("ur0");
     if (fd < 0)
       return res;
 
@@ -66,7 +129,7 @@ static int sceSysmoduleLoadModuleInternalWithArgPatched(SceUInt32 id, SceSize ar
     sceIoRead(fd, custom_warning, size);
     sceIoClose(fd);
 
-    custom_warning[size / 2] = 0;
+    custom_warning[size / 2] = L'\0';  // null terminate the string
 
     if (custom_warning[0] != 0xFEFF) {
       sce_paf_private_free(custom_warning);

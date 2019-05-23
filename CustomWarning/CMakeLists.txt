@@ -22,7 +22,8 @@ target_link_libraries(custom_warning
   SceIofilemgr_stub
   SceLibKernel_stub
   ScePaf_stub_weak
-  taiHEN_stub
+  taihen_stub
+  gcc
 )
 
 vita_create_self(custom_warning.suprx custom_warning CONFIG exports.yml UNSAFE)
